@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简易打字训练</title>
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5; /* 靛蓝色 */
+            --success-color: #10b981; /* 翠绿色 */
+            --error-color: #ef4444;   /* 红色 */
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--text-main);
+        }
+
+        /* --- 卡片容器 --- */
+        .container {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            width: 600px;
+            max-width: 90%;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        p.subtitle {
+            color: var(--text-sub);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        /* --- 按钮样式 --- */
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+        }
+
+        .btn:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-sub);
+            box-shadow: none;
+            border: 1px solid #e5e7eb;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background-color: #f9fafb;
+            color: var(--text-main);
+        }
+
+        /* --- 游戏区域细节 --- */
+        #gameArea {
+            display: none; /* 默认隐藏 */
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 进度条 */
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: #e5e7eb;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        /* 待输入文本显示区 */
+        .target-text {
+            font-family: 'Courier New', Courier, monospace; /* 等宽字体更适合打字 */
+            font-size: 22px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            text-align: left;
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            user-select: none; /* 防止用户选中文本作弊 */
+        }
+
+        /* 字符状态颜色 */
+        .char-correct { color: var(--success-color); }
+        .char-wrong { color: var(--error-color); text-decoration: underline; background-color: #fee2e2; }
+        .char-pending { color: #9ca3af; }
+
+        /* 输入框 */
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            outline: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        /* 结果面板 */
+        #resultPanel {
+            display: none;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .score-big {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-item {
+            background: #f9fafb;
+            padding: 15px;
+       }
+	.stat-label { font-size: 12px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 20px; font-weight: bold; color: var(--text-main); margin-top: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 1. 开始界面 -->
+        <div id="startScreen">
+            <h1>⌨️ 简易打字训练</h1>
+            <p class="subtitle">作者联系邮箱：qwerty_2020825@qq.com</p >
+            <button class="btn" onclick="startGame()">开始挑战</button>
+        </div>
+
+        <!-- 2. 游戏进行中界面 -->
+        <div id="gameArea">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <!-- 显示目标文本 -->
+            <div class="target-text" id="targetDisplay"></div>
+
+            <!-- 输入框 -->
+            <input type="text" id="userInput" placeholder="在此处输入..." autocomplete="off" spellcheck="false">
+
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="resetGame()">放弃并返回</button>
+            </div>
+        </div>
+
+        <!-- 3. 结算界面 -->
+        <div id="resultPanel">
+            <h1>挑战完成！🎉</h1>
+            <div class="score-big" id="finalScore">100%</div>
+
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">耗时</div>
+                    <div class="stat-value" id="timeSpent">0s</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">速度 (WPM)</div>
+                    <div class="stat-value" id="wpmSpeed">0</div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="resetGame()">再来一局</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 数据与状态管理
+        // ==========================================
+        const sentences = [
+            "The quick brown fox jumps over the lazy dog.",
+            "Practice makes perfect.",
+            "Hello world",
+            "JavaScript is awesome",
+            "Keep coding and stay hungry.",
+	    "What nationality are you?",
+	    "A diamond in the routh.",
+	    "A drop in the bucket.",
+	    "A picture is worth a thousand words.",
+	    "A piece of cake.",
+	    "Ball is in your court."
+        ];
+
+        let currentSentence = "";
+        let startTime = null;
+        let timerInterval = null;
+
+        // DOM 元素引用
+        const startScreen = document.getElementById('startScreen');
+        const gameArea = document.getElementById('gameArea');
+        const resultPanel = document.getElementById('resultPanel');
+        const targetDisplay = document.getElementById('targetDisplay');
+        const userInput = document.getElementById('userInput');
+        const progressBar = document.getElementById('progressBar');
+
+        // ==========================================
+        // 核心逻辑
+        // ==========================================
+
+        function startGame() {
+            // 随机选择一句
+            currentSentence = sentences[Math.floor(Math.random() * sentences.length)];
+
+            // 切换界面
+            startScreen.style.display = 'none';
+            resultPanel.style.display = 'none';
+            gameArea.style.display = 'block';
+
+            // 初始化状态
+            renderText();
+            userInput.value = '';
+            userInput.focus();
+            startTime = Date.now();
+
+            // 监听输入事件实现实时校验
+            userInput.addEventListener('input', checkInput);
+
+            // 允许按 Enter 强制提交（如果句子较短）
+            userInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') finishGame();
+            });
+        }
+
+        function renderText() {
+            targetDisplay.innerHTML = '';
+            // 将句子拆分为单个字符 span，方便单独着色
+            currentSentence.split('').forEach(char => {
+                const span = document.createElement('span');
+                span.innerText = char;
+                span.className = 'char-pending';
+                targetDisplay.appendChild(span);
+            });
+            updateProgress();
+        }
+
+        function checkInput() {
+            const val = userInput.value;
+            const spans = targetDisplay.querySelectorAll('span');
+
+            // 遍历每个字符进行比对
+            spans.forEach((span, index) => {
+                const char = val[index];
+                if (char == null) {
+                    span.className = 'char-pending'; // 还没打到
+                } else if (char === span.innerText) {
+                    span.className = 'char-correct'; // 打对了
+                } else {
+                    span.className = 'char-wrong';   // 打错了
+                }
+            });
+
+            // 更新进度条
+            const progress = (val.length / currentSentence.length) * 100;
+            progressBar.style.width = `${Math.min(progress, 100)}%`;
+
+            // 自动检测完成
+            if (val.length === currentSentence.length) {
+                // 稍微延迟一点让用户看到最后一个字变绿
+                setTimeout(finishGame, 200);
+            }
+        }
+
+        function updateProgress() {
+             // 初始进度条归零
+             progressBar.style.width = '0%';
+        }
+
+        function finishGame() {
+            const endTime = Date.now();
+            const duration = (endTime - startTime) / 1000; // 秒
+
+            // 计算准确率
+            const val = userInput.value;
+            let correctChars = 0;
+            for(let i=0; i<currentSentence.length; i++) {
+                if(val[i] === currentSentence[i]) correctChars++;
+            }
+            const accuracy = Math.round((correctChars / currentSentence.length) * 100);
+
+            // 计算 WPM (Words Per Minute, 假设平均每个单词5个字符)
+            const wpm = Math.round((currentSentence.length / 5) / (duration / 60));
+
+            // 显示结果
+            gameArea.style.display = 'none';
+            resultPanel.style.display = 'block';
+
+            document.getElementById('finalScore').innerText = `${accuracy}%`;
+            document.getElementById('finalScore').style.color = accuracy === 100 ? 'var(--success-color)' : 'var(--primary-color)';
+            document.getElementById('timeSpent').innerText = `${duration.toFixed(1)}s`;
+            document.getElementById('wpmSpeed').innerText = wpm;
+        }
+
+        function resetGame() {
+            // 清理监听器防止重复绑定
+            userInput.removeEventListener('input', checkInput);
+
+            resultPanel.style.display = 'none';
+            gameArea.style.display = 'none';
+            startScreen.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
