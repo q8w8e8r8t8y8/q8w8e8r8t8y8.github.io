@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>我的打字练习</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f0f0f0; }
+        #word-display { font-size: 40px; margin-bottom: 20px; color: #333; }
+        input { font-size: 24px; padding: 10px; width: 300px; text-align: center; }
+        .correct { color: green; }
+        .wrong { color: red; }
+    </style>
+</head>
+<body>
+
+    <h1>简易打字训练</h1>
+    <p>请在下方输入框中输入显示的单词：</p>
+
+    <div id="word-display">Hello</div>
+    <input type="text" id="user-input" placeholder="在此输入..." autofocus>
+    <p id="message"></p>
+
+    <script>
+        const words = ["Hello", "World", "GitHub", "Code", "Python", "Java", "Apple", "Banana"];
+        let currentWordIndex = 0;
+        const wordDisplay = document.getElementById('word-display');
+        const userInput = document.getElementById('user-input');
+        const message = document.getElementById('message');
+
+        function checkInput() {
+            if (userInput.value === words[currentWordIndex]) {
+                message.textContent = "正确！下一个...";
+                message.className = "correct";
+                currentWordIndex++;
+                if (currentWordIndex < words.length) {
+                    wordDisplay.textContent = words[currentWordIndex];
+                    userInput.value = "";
+                } else {
+                    wordDisplay.textContent = "恭喜！全部完成！";
+                    userInput.disabled = true;
+                }
+            } else {
+                message.textContent = "继续加油...";
+                message.className = "";
+            }
+        }
+
+        userInput.addEventListener('input', checkInput);
+    </script>
+
+</body>
+</html>
